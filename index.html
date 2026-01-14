@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repaso de Fisiología 🫀</title>
+    <style>
+        /* 🎨 ESTILOS CSS */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background-color: white;
+            width: 100%;
+            max-width: 650px;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 20px;}
+        h2 { color: #34495e; font-size: 1.2rem; margin-top: 0;}
+
+        /* Estilos del Menú */
+        .menu-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        input[type="number"] {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 60px;
+            text-align: center;
+        }
+
+        /* Botones */
+        .btn-grid { display: grid; gap: 10px; }
+        
+        .btn {
+            background-color: #eec0c6;
+            background-image: linear-gradient(315deg, #eec0c6 0%, #7ee8fa 74%);
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            color: #333;
+            font-weight: 500;
+            width: 100%;
+        }
+
+        .btn:hover { transform: scale(1.01); font-weight: bold; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-primary {
+            background: #2c3e50;
+            color: white;
+            font-weight: bold;
+        }
+        .btn-primary:hover { background: #34495e; transform: scale(1.02); }
+
+        .btn.correct { background: #4caf50 !important; color: white; }
+        .btn.wrong { background: #f44336 !important; color: white; }
+
+        /* Resultados */
+        .results-box {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .failed-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+            font-size: 0.9rem;
+        }
+        .failed-item strong { color: #e74c3c; }
+        .failed-item span { color: #27ae60; font-weight: bold; }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .hide { display: none; }
+        
+        /* Checkbox slider bonito */
+        .switch { position: relative; display: inline-block; width: 40px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2196F3; }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <h1>Fisiología 🫀</h1>
+        
+        <div id="menu-screen">
+            <p style="text-align:center;">Elige cómo quieres estudiar hoy:</p>
+            
+            <div class="menu-section">
+                <h2>♾️ Modo Repaso (Infinito)</h2>
+                <p style="font-size: 0.9rem; margin-bottom: 10px;">Todas las preguntas hasta que te canses. Sin penalización.</p>
+                <button onclick="startRepaso()" class="btn btn-primary">Empezar Repaso</button>
+            </div>
+
+            <div class="menu-section">
+                <h2>📝 Modo Examen</h2>
+                
+                <div class="input-group">
+                    <label>Nº de Preguntas:</label>
+                    <input type="number" id="exam-num" value="20" min="5" max="300">
+                </div>
+
+                <div class="input-group" style="margin-top: 10px;">
+                    <label>Hándicap (Restar puntos):</label>
+                    <label class="switch">
+                        <input type="checkbox" id="handicap-check" onchange="toggleHandicapInput()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="input-group" id="handicap-settings" style="opacity: 0.5; pointer-events: none;">
+                    <label style="font-size: 0.9rem;">Fallos para restar 1 bien:</label>
+                    <input type="number" id="handicap-ratio" value="3" min="1" max="10">
+                </div>
+
+                <button onclick="startExamen()" class="btn btn-primary" style="margin-top: 15px; background: #e67e22;">Empezar Examen</button>
+            </div>
+        </div>
+
+        <div id="quiz-screen" class="hide">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #7f8c8d; font-size: 0.9rem;">
+                <span id="progress-text">Pregunta x de y</span>
+                <span id="mode-indicator">Modo</span>
+            </div>
+            <div id="question" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 20px; color: #2c3e50;"></div>
+            <div id="answer-buttons" class="btn-grid"></div>
+            
+            <div class="controls">
+                <span id="score-live">Aciertos: 0</span>
+                <button id="next-btn" class="btn btn-primary hide">Siguiente ➡️</button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hide">
+            <h2>📊 Resultados Finales</h2>
+            <div style="text-align: center; margin: 20px 0;">
+                <p style="font-size: 1.1rem;">Has acertado <strong id="final-correct">0</strong> de <strong id="final-total">0</strong></p>
+                <p id="handicap-msg" style="font-size: 0.9rem; color: #e74c3c; display:none;">(Penalización aplicada: -<span id="points-deducted">0</span> puntos)</p>
+                <h1 style="font-size: 3rem; margin: 10px 0; color: #2196F3;" id="final-score">0.00</h1>
+            </div>
+
+            <h3>❌ Preguntas falladas:</h3>
+            <div id="failed-list" class="results-box">
+                </div>
+
+            <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 20px;">Volver al Menú</button>
+        </div>
+    </div>
+
+    <script src="preguntas.js"></script>
+
+    <script>
+        /* 🧠 LÓGICA DEL PROGRAMA */
+        
+        // Elementos del DOM
+        const menuScreen = document.getElementById('menu-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionElement = document.getElementById('question');
+        const answerButtonsElement = document.getElementById('answer-buttons');
+        const nextButton = document.getElementById('next-btn');
+        const progressText = document.getElementById('progress-text');
+        const scoreLive = document.getElementById('score-live');
+
+        // Variables de estado
+        let shuffledQuestions, currentQuestionIndex;
+        let score = 0;
+        let mistakes = 0;
+        let failedQuestions = []; // Array para guardar las preguntas falladas
+        let isExamMode = false;
+        let handicapActive = false;
+        let handicapRatio = 3;
+
+        // Configuración inicial de Inputs
+        function toggleHandicapInput() {
+            const isChecked = document.getElementById('handicap-check').checked;
+            const settingsDiv = document.getElementById('handicap-settings');
+            if(isChecked) {
+                settingsDiv.style.opacity = "1";
+                settingsDiv.style.pointerEvents = "auto";
+            } else {
+                settingsDiv.style.opacity = "0.5";
+                settingsDiv.style.pointerEvents = "none";
+            }
+        }
+
+        // --- MODO REPASO ---
+        function startRepaso() {
+            if (!validateQuestions()) return;
+            isExamMode = false;
+            document.getElementById('mode-indicator').innerText = "Modo Repaso";
+            // Usamos todas las preguntas
+            shuffledQuestions = questions.sort(() => Math.random() - .5);
+            beginGame();
+        }
+
+        // --- MODO EXAMEN ---
+        function startExamen() {
+            if (!validateQuestions()) return;
+            isExamMode = true;
+            document.getElementById('mode-indicator').innerText = "Modo Examen";
+            
+            // Configurar hándicap
+            handicapActive = document.getElementById('handicap-check').checked;
+            handicapRatio = parseInt(document.getElementById('handicap-ratio').value);
+
+            // Seleccionar N preguntas aleatorias
+            const numToPlay = parseInt(document.getElementById('exam-num').value);
+            shuffledQuestions = questions.sort(() => Math.random() - .5).slice(0, numToPlay);
+            
+            beginGame();
+        }
+
+        function validateQuestions() {
+            if (typeof questions === 'undefined' || questions.length === 0) {
+                alert("⚠️ Error: No encuentro el archivo 'preguntas.js'.");
+                return false;
+            }
+            return true;
+        }
+
+        // --- MOTOR DEL JUEGO ---
+        function beginGame() {
+            menuScreen.classList.add('hide');
+            resultScreen.classList.add('hide');
+            quizScreen.classList.remove('hide');
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            mistakes = 0;
+            failedQuestions = []; // Reiniciamos fallos
+            scoreLive.innerText = 'Aciertos: ' + score;
+            
+            nextButton.addEventListener('click', () => {
+                currentQuestionIndex++;
+                setNextQuestion();
+            });
+            
+            setNextQuestion();
+        }
+
+        function setNextQuestion() {
+            resetState();
+            showQuestion(shuffledQuestions[currentQuestionIndex]);
+            progressText.innerText = `Pregunta ${currentQuestionIndex + 1} de ${shuffledQuestions.length}`;
+        }
+
+        function showQuestion(question) {
+            questionElement.innerText = question.question;
+            question.answers.forEach(answer => {
+                const button = document.createElement('button');
+                button.innerText = answer.text;
+                button.classList.add('btn');
+                if (answer.correct) {
+                    button.dataset.correct = answer.correct;
+                }
+                button.addEventListener('click', selectAnswer);
+                answerButtonsElement.appendChild(button);
+            });
+        }
+
+        function resetState() {
+            nextButton.classList.add('hide');
+            while (answerButtonsElement.firstChild) {
+                answerButtonsElement.removeChild(answerButtonsElement.firstChild);
+            }
+        }
+
+        function selectAnswer(e) {
+            const selectedButton = e.target;
+            const correct = selectedButton.dataset.correct === "true";
+            
+            // Lógica de puntuación
+            if(correct) {
+                score++;
+                scoreLive.innerText = 'Aciertos: ' + score;
+            } else {
+                mistakes++;
+                // Guardamos la pregunta fallada y la respuesta correcta
+                const currentQ = shuffledQuestions[currentQuestionIndex];
+                const correctAns = currentQ.answers.find(a => a.correct).text;
+                failedQuestions.push({
+                    q: currentQ.question,
+                    correctA: correctAns,
+                    userA: selectedButton.innerText
+                });
+            }
+
+            // Mostrar colores
+            Array.from(answerButtonsElement.children).forEach(button => {
+                setStatusClass(button, button.dataset.correct === "true");
+                button.disabled = true; // Bloquear todos
+            });
+
+            // Verificar si quedan preguntas
+            if (shuffledQuestions.length > currentQuestionIndex + 1) {
+                nextButton.classList.remove('hide');
+            } else {
+                // FIN DEL JUEGO -> IR A RESULTADOS
+                setTimeout(showResults, 1000);
+            }
+        }
+
+        function setStatusClass(element, correct) {
+            clearStatusClass(element);
+            if (correct) {
+                element.classList.add('correct');
+            } else {
+                element.classList.add('wrong');
+            }
+        }
+
+        function clearStatusClass(element) {
+            element.classList.remove('correct');
+            element.classList.remove('wrong');
+        }
+
+        // --- PANTALLA DE RESULTADOS ---
+        function showResults() {
+            quizScreen.classList.add('hide');
+            resultScreen.classList.remove('hide');
+
+            // 1. Calcular Nota Final
+            let finalScoreCalc = score;
+            let deduction = 0;
+
+            if (handicapActive && isExamMode) {
+                // Fórmula: Aciertos - (Fallos / Ratio)
+                deduction = mistakes / handicapRatio;
+                finalScoreCalc = score - deduction;
+                
+                // Mostrar mensaje de penalización
+                document.getElementById('handicap-msg').style.display = 'block';
+                document.getElementById('points-deducted').innerText = deduction.toFixed(2);
+            } else {
+                document.getElementById('handicap-msg').style.display = 'none';
+            }
+
+            // Evitar notas negativas visualmente (opcional, pero queda mejor)
+            if (finalScoreCalc < 0) finalScoreCalc = 0;
+
+            // Rellenar datos
+            document.getElementById('final-correct').innerText = score;
+            document.getElementById('final-total').innerText = shuffledQuestions.length;
+            
+            // Si es modo examen, mostramos nota sobre 10, si no, aciertos netos
+            if (isExamMode) {
+                // Regla de tres para nota sobre 10
+                let grade = (finalScoreCalc / shuffledQuestions.length) * 10;
+                document.getElementById('final-score').innerText = grade.toFixed(2);
+            } else {
+                document.getElementById('final-score').innerText = finalScoreCalc.toFixed(2) + " pts";
+            }
+
+            // 2. Generar lista de fallos
+            const listContainer = document.getElementById('failed-list');
+            listContainer.innerHTML = ""; // Limpiar anterior
+
+            if (failedQuestions.length === 0) {
+                listContainer.innerHTML = "<p style='text-align:center; color:#27ae60;'>¡Enhorabuena! No has tenido ningún fallo. 🎉</p>";
+            } else {
+                failedQuestions.forEach((fail, index) => {
+                    const item = document.createElement('div');
+                    item.classList.add('failed-item');
+                    item.innerHTML = `
+                        <p style="margin:0 0 5px 0;"><strong>${index + 1}.</strong> ${fail.q}</p>
+                        <p style="margin:0; font-size: 0.85rem;">
+                            ❌ Tu respuesta: <i style="text-decoration:line-through; color:#e74c3c;">${fail.userA}</i><br>
+                            ✅ Correcta: <span>${fail.correctA}</span>
+                        </p>
+                    `;
+                    listContainer.appendChild(item);
+                });
+            }
+        }
+
+    </script>
+</body>
+</html>
