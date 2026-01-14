@@ -24,10 +24,36 @@
             border-radius: 15px;
             padding: 25px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         h1 { text-align: center; color: #2c3e50; margin-bottom: 20px;}
         h2 { color: #34495e; font-size: 1.2rem; margin-top: 0;}
+
+        /* Header del Quiz (Botón volver y progreso) */
+        .quiz-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        .back-btn:hover { background-color: #f0f0f0; color: #c0392b; }
 
         /* Estilos del Menú */
         .menu-section {
@@ -74,7 +100,7 @@
         }
 
         .btn:hover { transform: scale(1.01); font-weight: bold; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
         .btn-primary {
             background: #2c3e50;
@@ -82,6 +108,14 @@
             font-weight: bold;
         }
         .btn-primary:hover { background: #34495e; transform: scale(1.02); }
+
+        .btn-skip {
+            background: #95a5a6 !important;
+            color: white;
+            font-size: 0.9rem;
+            padding: 10px;
+        }
+        .btn-skip:hover { background: #7f8c8d !important; }
 
         .btn.correct { background: #4caf50 !important; color: white; }
         .btn.wrong { background: #f44336 !important; color: white; }
@@ -110,6 +144,7 @@
             margin-top: 20px;
             border-top: 1px solid #eee;
             padding-top: 15px;
+            gap: 10px;
         }
 
         .hide { display: none; }
@@ -164,15 +199,20 @@
         </div>
 
         <div id="quiz-screen" class="hide">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #7f8c8d; font-size: 0.9rem;">
-                <span id="progress-text">Pregunta x de y</span>
-                <span id="mode-indicator">Modo</span>
+            <div class="quiz-header-bar">
+                <button onclick="location.reload()" class="back-btn">⬅️ Menú</button>
+                <div style="text-align: right; color: #7f8c8d; font-size: 0.9rem;">
+                    <div id="mode-indicator" style="font-weight:bold;">Modo</div>
+                    <div id="progress-text">Pregunta x de y</div>
+                </div>
             </div>
+
             <div id="question" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 20px; color: #2c3e50;"></div>
             <div id="answer-buttons" class="btn-grid"></div>
             
             <div class="controls">
-                <span id="score-live">Aciertos: 0</span>
+                <span id="score-live" style="min-width: 80px;">Aciertos: 0</span>
+                <button id="skip-btn" class="btn btn-skip">Dejar en blanco ⚪</button>
                 <button id="next-btn" class="btn btn-primary hide">Siguiente ➡️</button>
             </div>
         </div>
@@ -180,7 +220,7 @@
         <div id="result-screen" class="hide">
             <h2>📊 Resultados Finales</h2>
             <div style="text-align: center; margin: 20px 0;">
-                <p style="font-size: 1.1rem;">Has acertado <strong id="final-correct">0</strong> de <strong id="final-total">0</strong></p>
+                <p style="font-size: 1.1rem;">Aciertos: <strong id="final-correct" style="color:#27ae60;">0</strong> | Blancos: <strong id="final-skipped" style="color:#95a5a6;">0</strong> | Fallos: <strong id="final-wrong" style="color:#e74c3c;">0</strong></p>
                 <p id="handicap-msg" style="font-size: 0.9rem; color: #e74c3c; display:none;">(Penalización aplicada: -<span id="points-deducted">0</span> puntos)</p>
                 <h1 style="font-size: 3rem; margin: 10px 0; color: #2196F3;" id="final-score">0.00</h1>
             </div>
@@ -205,6 +245,7 @@
         const questionElement = document.getElementById('question');
         const answerButtonsElement = document.getElementById('answer-buttons');
         const nextButton = document.getElementById('next-btn');
+        const skipButton = document.getElementById('skip-btn'); // Nuevo botón
         const progressText = document.getElementById('progress-text');
         const scoreLive = document.getElementById('score-live');
 
@@ -212,7 +253,8 @@
         let shuffledQuestions, currentQuestionIndex;
         let score = 0;
         let mistakes = 0;
-        let failedQuestions = []; // Array para guardar las preguntas falladas
+        let skipped = 0; // Contador de preguntas en blanco
+        let failedQuestions = []; 
         let isExamMode = false;
         let handicapActive = false;
         let handicapRatio = 3;
@@ -235,7 +277,6 @@
             if (!validateQuestions()) return;
             isExamMode = false;
             document.getElementById('mode-indicator').innerText = "Modo Repaso";
-            // Usamos todas las preguntas
             shuffledQuestions = questions.sort(() => Math.random() - .5);
             beginGame();
         }
@@ -246,11 +287,9 @@
             isExamMode = true;
             document.getElementById('mode-indicator').innerText = "Modo Examen";
             
-            // Configurar hándicap
             handicapActive = document.getElementById('handicap-check').checked;
             handicapRatio = parseInt(document.getElementById('handicap-ratio').value);
 
-            // Seleccionar N preguntas aleatorias
             const numToPlay = parseInt(document.getElementById('exam-num').value);
             shuffledQuestions = questions.sort(() => Math.random() - .5).slice(0, numToPlay);
             
@@ -274,13 +313,17 @@
             currentQuestionIndex = 0;
             score = 0;
             mistakes = 0;
-            failedQuestions = []; // Reiniciamos fallos
+            skipped = 0;
+            failedQuestions = []; 
             scoreLive.innerText = 'Aciertos: ' + score;
             
             nextButton.addEventListener('click', () => {
                 currentQuestionIndex++;
                 setNextQuestion();
             });
+
+            // Lógica del botón saltar
+            skipButton.addEventListener('click', skipQuestion);
             
             setNextQuestion();
         }
@@ -307,22 +350,28 @@
 
         function resetState() {
             nextButton.classList.add('hide');
+            skipButton.classList.remove('hide'); // Mostrar botón saltar
+            skipButton.disabled = false;
             while (answerButtonsElement.firstChild) {
                 answerButtonsElement.removeChild(answerButtonsElement.firstChild);
             }
+        }
+
+        // Función para dejar en blanco
+        function skipQuestion() {
+            skipped++;
+            revealAnswer(); // Mostrar cuál era la correcta aunque no puntúe
         }
 
         function selectAnswer(e) {
             const selectedButton = e.target;
             const correct = selectedButton.dataset.correct === "true";
             
-            // Lógica de puntuación
             if(correct) {
                 score++;
                 scoreLive.innerText = 'Aciertos: ' + score;
             } else {
                 mistakes++;
-                // Guardamos la pregunta fallada y la respuesta correcta
                 const currentQ = shuffledQuestions[currentQuestionIndex];
                 const correctAns = currentQ.answers.find(a => a.correct).text;
                 failedQuestions.push({
@@ -331,18 +380,28 @@
                     userA: selectedButton.innerText
                 });
             }
+            
+            // Efecto visual en el botón pulsado
+            setStatusClass(selectedButton, correct);
+            revealAnswer();
+        }
 
-            // Mostrar colores
+        function revealAnswer() {
+            // Deshabilitar todos los botones
             Array.from(answerButtonsElement.children).forEach(button => {
-                setStatusClass(button, button.dataset.correct === "true");
-                button.disabled = true; // Bloquear todos
+                // Si es la correcta, la marcamos en verde
+                if (button.dataset.correct === "true") {
+                    button.classList.add('correct');
+                }
+                button.disabled = true;
             });
 
+            skipButton.classList.add('hide'); // Ocultar botón saltar
+            
             // Verificar si quedan preguntas
             if (shuffledQuestions.length > currentQuestionIndex + 1) {
                 nextButton.classList.remove('hide');
             } else {
-                // FIN DEL JUEGO -> IR A RESULTADOS
                 setTimeout(showResults, 1000);
             }
         }
@@ -371,27 +430,24 @@
             let deduction = 0;
 
             if (handicapActive && isExamMode) {
-                // Fórmula: Aciertos - (Fallos / Ratio)
                 deduction = mistakes / handicapRatio;
                 finalScoreCalc = score - deduction;
                 
-                // Mostrar mensaje de penalización
                 document.getElementById('handicap-msg').style.display = 'block';
                 document.getElementById('points-deducted').innerText = deduction.toFixed(2);
             } else {
                 document.getElementById('handicap-msg').style.display = 'none';
             }
 
-            // Evitar notas negativas visualmente (opcional, pero queda mejor)
             if (finalScoreCalc < 0) finalScoreCalc = 0;
 
-            // Rellenar datos
+            // Rellenar estadísticas
             document.getElementById('final-correct').innerText = score;
+            document.getElementById('final-wrong').innerText = mistakes;
+            document.getElementById('final-skipped').innerText = skipped;
             document.getElementById('final-total').innerText = shuffledQuestions.length;
             
-            // Si es modo examen, mostramos nota sobre 10, si no, aciertos netos
             if (isExamMode) {
-                // Regla de tres para nota sobre 10
                 let grade = (finalScoreCalc / shuffledQuestions.length) * 10;
                 document.getElementById('final-score').innerText = grade.toFixed(2);
             } else {
@@ -400,16 +456,16 @@
 
             // 2. Generar lista de fallos
             const listContainer = document.getElementById('failed-list');
-            listContainer.innerHTML = ""; // Limpiar anterior
+            listContainer.innerHTML = ""; 
 
             if (failedQuestions.length === 0) {
-                listContainer.innerHTML = "<p style='text-align:center; color:#27ae60;'>¡Enhorabuena! No has tenido ningún fallo. 🎉</p>";
+                listContainer.innerHTML = "<p style='text-align:center; color:#27ae60;'>¡Perfecto! No has tenido fallos (solo blancos o aciertos). 🎉</p>";
             } else {
                 failedQuestions.forEach((fail, index) => {
                     const item = document.createElement('div');
                     item.classList.add('failed-item');
                     item.innerHTML = `
-                        <p style="margin:0 0 5px 0;"><strong>${index + 1}.</strong> ${fail.q}</p>
+                        <p style="margin:0 0 5px 0;"><strong>⚠️ Fallo:</strong> ${fail.q}</p>
                         <p style="margin:0; font-size: 0.85rem;">
                             ❌ Tu respuesta: <i style="text-decoration:line-through; color:#e74c3c;">${fail.userA}</i><br>
                             ✅ Correcta: <span>${fail.correctA}</span>
