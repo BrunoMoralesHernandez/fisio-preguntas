@@ -14,20 +14,18 @@
         <div id="menu-screen">
             <p style="text-align:center;">Elige cómo quieres estudiar hoy:</p>
             
-            <div class="menu-section">
-                <h2>♾️ Modo Repaso (Infinito)</h2>
-                <p style="font-size: 0.9rem; margin-bottom: 10px;">Todas las preguntas hasta que te canses. Sin penalización.</p>
-                <button onclick="startRepaso()" class="btn btn-primary">Empezar Repaso</button>
+            <div class="menu-section" style="border-left: 5px solid #9b59b6;">
+                <h2>🎯 Bloque Específico 1</h2>
+                <p style="font-size: 0.9rem; margin-bottom: 10px;">Preguntas seleccionadas (Nervioso, celular...).</p>
+                <button onclick="startBloquePersonalizado()" class="btn btn-primary" style="background: #8e44ad;">Estudiar Bloque 1</button>
             </div>
 
-            <div class="menu-section">
+            <div class="menu-section" style="border-left: 5px solid #e67e22;">
                 <h2>📝 Modo Examen</h2>
-                
                 <div class="input-group">
-                    <label>Nº de Preguntas:</label>
+                    <label>Nº de Preguntas (Aleatorias):</label>
                     <input type="number" id="exam-num" value="20" min="5" max="300">
                 </div>
-
                 <div class="input-group" style="margin-top: 10px;">
                     <label>Hándicap (Restar puntos):</label>
                     <label class="switch">
@@ -35,13 +33,17 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-
                 <div class="input-group" id="handicap-settings" style="opacity: 0.5; pointer-events: none;">
                     <label style="font-size: 0.9rem;">Fallos para restar 1 bien:</label>
                     <input type="number" id="handicap-ratio" value="3" min="1" max="10">
                 </div>
-
                 <button onclick="startExamen()" class="btn btn-primary" style="margin-top: 15px; background: #e67e22;">Empezar Examen</button>
+            </div>
+
+            <div class="menu-section" style="border-left: 5px solid #2c3e50;">
+                <h2>♾️ Modo Infinito</h2>
+                <p style="font-size: 0.9rem; margin-bottom: 10px;">Todas las preguntas mezcladas hasta que te canses.</p>
+                <button onclick="startRepaso()" class="btn btn-primary">Empezar Repaso</button>
             </div>
         </div>
 
@@ -73,15 +75,14 @@
             </div>
 
             <h3>❌ Preguntas falladas:</h3>
-            <div id="failed-list" class="results-box">
-                </div>
+            <div id="failed-list" class="results-box"></div>
 
             <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 20px;">Volver al Menú</button>
         </div>
     </div>
 
     <script src="preguntas.js"></script>
-
     <script src="logica.js"></script>
+
 </body>
 </html>

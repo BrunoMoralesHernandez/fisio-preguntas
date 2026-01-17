@@ -1,6 +1,16 @@
 /* 🧠 LÓGICA DEL JUEGO (logica.js) */
 
-// Elementos del DOM
+// --- 1. CONSTANTE CON TUS ÍNDICES ESPECÍFICOS ---
+const INDICES_BLOQUE_1 = [
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 13, 15, 16, 17, 18, 
+    91, 92, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 
+    116, 117, 204, 205, 207, 208, 209, 213, 217, 253, 
+    254, 255, 256, 257, 258, 263, 276, 277, 278, 279, 
+    280, 281, 282, 283, 285, 307, 320, 321, 322, 323, 
+    324, 325, 326
+];
+
+// Elementos del DOM (Igual que antes)
 const menuScreen = document.getElementById('menu-screen');
 const quizScreen = document.getElementById('quiz-screen');
 const resultScreen = document.getElementById('result-screen');
@@ -11,7 +21,7 @@ const skipButton = document.getElementById('skip-btn');
 const progressText = document.getElementById('progress-text');
 const scoreLive = document.getElementById('score-live');
 
-// Variables de estado
+// Variables de estado (Igual que antes)
 let shuffledQuestions, currentQuestionIndex;
 let score = 0;
 let mistakes = 0;
@@ -21,7 +31,7 @@ let isExamMode = false;
 let handicapActive = false;
 let handicapRatio = 3;
 
-// Configuración inicial de Inputs
+// Configuración Inputs (Igual que antes)
 function toggleHandicapInput() {
     const isChecked = document.getElementById('handicap-check').checked;
     const settingsDiv = document.getElementById('handicap-settings');
@@ -34,16 +44,44 @@ function toggleHandicapInput() {
     }
 }
 
-// --- MODO REPASO ---
+// --- 2. NUEVA FUNCIÓN PARA TU BLOQUE PERSONALIZADO ---
+function startBloquePersonalizado() {
+    if (!validateQuestions()) return;
+
+    // Filtramos las preguntas usando tu lista de índices
+    // Los índices en INDICES_BLOQUE_1 van del 1 al total, restamos 1 para acceder al array (que empieza en 0)
+    const preguntasFiltradas = INDICES_BLOQUE_1
+        .map(numero => questions[numero - 1]) // Convertir de 1-based a 0-based
+        .filter(p => p !== undefined && p !== null); // Eliminar preguntas no encontradas
+
+    // Verificar si encontramos preguntas
+    if (preguntasFiltradas.length === 0) {
+        alert("❌ Error: No se encontraron preguntas para el Bloque 1");
+        return;
+    }
+
+    // Las mezclamos
+    shuffledQuestions = preguntasFiltradas.sort(() => Math.random() - 0.5);
+    
+    // Configuramos modo
+    isExamMode = false;
+    document.getElementById('mode-indicator').innerText = `Bloque Específico 1 (${preguntasFiltradas.length} preguntas)`;
+    
+    beginGame();
+}
+
+// ... (EL RESTO DEL ARCHIVO SIGUE IGUAL: startRepaso, startExamen, beginGame, etc.) ...
+// Copia aquí el resto de funciones que ya tenías (startRepaso, startExamen, beginGame, etc.)
+// para no repetir todo el código gigante otra vez.
+
 function startRepaso() {
     if (!validateQuestions()) return;
     isExamMode = false;
-    document.getElementById('mode-indicator').innerText = "Modo Repaso";
+    document.getElementById('mode-indicator').innerText = "Modo Infinito";
     shuffledQuestions = questions.sort(() => Math.random() - .5);
     beginGame();
 }
 
-// --- MODO EXAMEN ---
 function startExamen() {
     if (!validateQuestions()) return;
     isExamMode = true;
@@ -60,13 +98,12 @@ function startExamen() {
 
 function validateQuestions() {
     if (typeof questions === 'undefined' || questions.length === 0) {
-        alert("⚠️ Error: No encuentro el archivo 'preguntas.js'. Asegúrate de que está en la misma carpeta.");
+        alert("⚠️ Error: No encuentro las preguntas.");
         return false;
     }
     return true;
 }
 
-// --- MOTOR DEL JUEGO ---
 function beginGame() {
     menuScreen.classList.add('hide');
     resultScreen.classList.add('hide');
@@ -79,22 +116,17 @@ function beginGame() {
     failedQuestions = []; 
     scoreLive.innerText = 'Aciertos: ' + score;
     
-    // Eliminamos listeners anteriores para evitar duplicados si reiniciamos
     const newNextBtn = nextButton.cloneNode(true);
     nextButton.parentNode.replaceChild(newNextBtn, nextButton);
-    // Reasignamos la variable global
     const updatedNextBtn = document.getElementById('next-btn');
-    
     updatedNextBtn.addEventListener('click', () => {
         currentQuestionIndex++;
         setNextQuestion();
     });
 
-    // Lo mismo para el botón saltar
     const newSkipBtn = skipButton.cloneNode(true);
     skipButton.parentNode.replaceChild(newSkipBtn, skipButton);
     const updatedSkipBtn = document.getElementById('skip-btn');
-
     updatedSkipBtn.addEventListener('click', skipQuestion);
     
     setNextQuestion();
@@ -103,8 +135,6 @@ function beginGame() {
 function setNextQuestion() {
     resetState();
     showQuestion(shuffledQuestions[currentQuestionIndex]);
-    const nextBtn = document.getElementById('next-btn'); // Asegurar referencia
-    
     if(progressText) progressText.innerText = `Pregunta ${currentQuestionIndex + 1} de ${shuffledQuestions.length}`;
 }
 
@@ -125,7 +155,6 @@ function showQuestion(question) {
 function resetState() {
     const nextBtn = document.getElementById('next-btn');
     const skipBtn = document.getElementById('skip-btn');
-    
     nextBtn.classList.add('hide');
     skipBtn.classList.remove('hide');
     skipBtn.disabled = false;
@@ -142,7 +171,6 @@ function skipQuestion() {
 function selectAnswer(e) {
     const selectedButton = e.target;
     const correct = selectedButton.dataset.correct === "true";
-    
     if(correct) {
         score++;
         scoreLive.innerText = 'Aciertos: ' + score;
@@ -156,7 +184,6 @@ function selectAnswer(e) {
             userA: selectedButton.innerText
         });
     }
-    
     setStatusClass(selectedButton, correct);
     revealAnswer();
 }
@@ -164,16 +191,13 @@ function selectAnswer(e) {
 function revealAnswer() {
     const nextBtn = document.getElementById('next-btn');
     const skipBtn = document.getElementById('skip-btn');
-
     Array.from(answerButtonsElement.children).forEach(button => {
         if (button.dataset.correct === "true") {
             button.classList.add('correct');
         }
         button.disabled = true;
     });
-
     skipBtn.classList.add('hide');
-    
     if (shuffledQuestions.length > currentQuestionIndex + 1) {
         nextBtn.classList.remove('hide');
     } else {
@@ -205,7 +229,6 @@ function showResults() {
     if (handicapActive && isExamMode) {
         deduction = mistakes / handicapRatio;
         finalScoreCalc = score - deduction;
-        
         document.getElementById('handicap-msg').style.display = 'block';
         document.getElementById('points-deducted').innerText = deduction.toFixed(2);
     } else {
